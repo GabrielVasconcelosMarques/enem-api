@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
 import json
 import random
+from flask_restx import Api, Resource, fields
+
 
 app = Flask(__name__)
-
+api = Api(app, version='1.0', title='API Rest ENEM', description='API de questões do ENEM', doc='/documentation', default='Clique aqui para acessar a documentação dos Endpoints')
 
 # Definir uma variável global para armazenar os dados
 dados = []
@@ -63,105 +65,107 @@ def carregar_dados():
         dados = json.load(f)
 
 
+
 # rota para retornar todas as questões
 # ex: /questions
-@app.route('/questions', methods=['GET'])
-def get_questions():
-    return jsonify(dados)
+@api.route('/questions')
+class QuestionsListTotal(Resource):
+    def get(self):
+        return jsonify(dados)
 
 # rota para retornar somente o ID solicitado
 # ex: /questions/1
-@app.route('/questions/<int:id>', methods=['GET'])
-def get_id(id):
-    resultado = {}
-    for d in dados:
-        if d['id'] == id:
-            resultado = d
-            break
-    return jsonify(resultado)
+@api.route('/questions/<int:id>')
+class QuestionById(Resource):
+    def get(self, id):
+        resultado = {}
+        for d in dados:
+            if d['id'] == id:
+                resultado = d
+                break
+        return jsonify(resultado)
 
 # rota para retornar filtrando por área de conhecimento
-# ex: /questions/area_conhecimento?area_conhecimento=linguagens
-@app.route('/questions/area_conhecimento', methods=['GET'])
-def get_area_conhecimento():
-    area_conhecimento = request.args.get('area_conhecimento')
-    area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
-    
-    questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
-    return jsonify(questoes_filtradas)
+# ex: /questions/area_conhecimento/linguagens
+@api.route('/questions/area_conhecimento/<string:area_conhecimento>')
+class QuestionsByArea(Resource):
+    def get(self, area_conhecimento):
+        area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
+        
+        questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
+        return jsonify(questoes_filtradas)
+
 
 
 # rota para retornar filtrando por disciplina
-# ex: /questions/disciplina?disciplina=ingles
-@app.route('/questions/disciplina', methods=['GET'])
-def get_disciplina():
-    disciplina = request.args.get('disciplina')
-    disciplina_ajustada = formatar_disciplina(disciplina)
-    
-    questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
-    return jsonify(questoes_filtradas)
+# ex: /questions/ingles
+# Modifique a rota
+@api.route('/questions/disciplina/<string:disciplina>', strict_slashes=False)
+class QuestionsByDiscipline(Resource):
+    def get(self, disciplina):
+        disciplina_ajustada = formatar_disciplina(disciplina)
+        
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
+        return jsonify(questoes_filtradas)
 
 
 # rota para retornar filtrando por ano
-# ex: /questions/ano?ano=2022
-@app.route('/questions/ano', methods=['GET'])
-def get_ano():
-    ano = request.args.get('ano')
-    
-    questoes_filtradas = [questao for questao in dados if questao['ano'] == ano]
-    return jsonify(questoes_filtradas)
+# ex: /questions/2022
+@api.route('/questions/ano/<int:ano>')
+class QuestionsByYear(Resource):
+    def get(self, ano):
+        
+        questoes_filtradas = [questao for questao in dados if questao['ano'] == str(ano)]
+        return jsonify(questoes_filtradas)
+
+#continuar daqui
 
 
 # rota para retornar filtrando por disciplina e ano
-# ex: /questions/disciplina-ano?disciplina=ingles&ano=2022
-@app.route('/questions/disciplina-ano', methods=['GET'])
-def get_disciplina_ano():
-    disciplina = request.args.get('disciplina')
-    disciplina_ajustada = formatar_disciplina(disciplina)
-
-    ano = request.args.get('ano')
-
-    questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada and questao['ano'] == ano]
-    return jsonify(questoes_filtradas)
+# ex: /questions/disciplina-ano/ingles/2022
+@api.route('/questions/disciplina-ano/<string:disciplina>/<int:ano>')
+class QuestionsByDisciplineAndYear(Resource):
+    def get(self, disciplina, ano):
+        disciplina_ajustada = formatar_disciplina(disciplina)
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada and questao['ano'] == str(ano)]
+        return jsonify(questoes_filtradas)
 
 
 # rota para retornar filtrando por área de conhecimento e ano
-# ex: /questions/area-ano?area_conhecimento=linguagens&ano=2022
-@app.route('/questions/area-ano', methods=['GET'])
-def get_area_conhecimento_ano():
-    area_conhecimento = request.args.get('area_conhecimento')
-    area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
-    
-    ano = request.args.get('ano')
+# ex: /questions/area-ano/linguagens/2022
+@api.route('/questions/area-ano/<string:area_conhecimento>/<int:ano>')
+class QuestionsByAreaAndYear(Resource):
+    def get(self, area_conhecimento, ano):
+        area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
 
-    questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada and questao['ano'] == ano]
-    return jsonify(questoes_filtradas)
+        questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada and questao['ano'] == str(ano)]
+        return jsonify(questoes_filtradas)
 
 
 # rota para retornar filtrando 30 questões aleatórias por disciplina
-# ex: /questions/random-disciplina?disciplina=ver
-@app.route('/questions/random-disciplina', methods=['GET'])
-def get_random_questions_disciplina():
-    disciplina = request.args.get('disciplina')
-    disciplina_ajustada = formatar_disciplina(disciplina)
+# ex: /questions/random-disciplina/ver
+@api.route('/questions/random-disciplina/<string:disciplina>')
+class QuestionsRandomByDiscipline(Resource):
+    def get(self, disciplina):
+        disciplina_ajustada = formatar_disciplina(disciplina)
 
-    questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
-    questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
+        questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
-    return jsonify(questoes_aleatorias)
+        return jsonify(questoes_aleatorias)
 
 
 # rota para retornar filtrando 30 questões aleatórias por área de conhecimento
-# ex: /questions/random-area?area_conhecimento=linguagens
-@app.route('/questions/random-area', methods=['GET'])
-def get_random_questions_area():
-    area_conhecimento = request.args.get('area_conhecimento')
-    area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
+# ex: /questions/random-area/linguagens
+@api.route('/questions/random-area/<string:area_conhecimento>')
+class QuestionsRandomByArea(Resource):
+    def get(self, area_conhecimento):
+        area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
 
-    questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
-    questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
+        questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
+        questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
-    return jsonify(questoes_aleatorias)
+        return jsonify(questoes_aleatorias)
 
 
 if __name__ == '__main__':
