@@ -1,10 +1,13 @@
 from flask import Flask, jsonify, request
 import json
 import random
-from flask_restx import Api, Resource, fields
+from flask_restx import Api, Resource
+from functools import wraps
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app, version='1.0', title='API Rest ENEM', description='API de questões do ENEM', doc='/documentation', default='Clique aqui para acessar a documentação dos Endpoints')
 
 # Definir uma variável global para armazenar os dados
@@ -55,7 +58,20 @@ def formatar_disciplina(disciplina):
         disciplina = 'Biologia'
 
     return disciplina
-    
+
+
+valid_tokens = ['abcde', 'token2', 'token3']  
+
+# Decorador que verifica se o token é válido
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.args.get('token')
+        if token not in valid_tokens:
+            return {'error': 'Token inválido.'}, 401
+        return f(*args, **kwargs)
+    return decorated
+
 
 # Decorator para carregar os dados na memória antes do primeiro acesso à rota
 @app.before_first_request
@@ -65,13 +81,21 @@ def carregar_dados():
         dados = json.load(f)
 
 
+# rota para retornar todas as questões somente de tokens autorizados
+# ex: http://127.0.0.1:5000/restrita?token=abcde
+@api.route('/restrita')
+class Index(Resource):
+    @requires_auth
+    def get(self):
+        return jsonify(dados)
+
 
 # rota para retornar todas as questões
 # ex: /questions
 @api.route('/questions')
 class QuestionsListTotal(Resource):
     def get(self):
-        return jsonify(dados)
+        return jsonify(dados), 200
 
 # rota para retornar somente o ID solicitado
 # ex: /questions/1
@@ -83,7 +107,7 @@ class QuestionById(Resource):
             if d['id'] == id:
                 resultado = d
                 break
-        return jsonify(resultado)
+        return jsonify(resultado), 200
 
 # rota para retornar filtrando por área de conhecimento
 # ex: /questions/area_conhecimento/linguagens
@@ -93,7 +117,7 @@ class QuestionsByArea(Resource):
         area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
         
         questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
-        return jsonify(questoes_filtradas)
+        return jsonify(questoes_filtradas), 200
 
 
 
@@ -106,7 +130,7 @@ class QuestionsByDiscipline(Resource):
         disciplina_ajustada = formatar_disciplina(disciplina)
         
         questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
-        return jsonify(questoes_filtradas)
+        return jsonify(questoes_filtradas), 200
 
 
 # rota para retornar filtrando por ano
@@ -116,7 +140,7 @@ class QuestionsByYear(Resource):
     def get(self, ano):
         
         questoes_filtradas = [questao for questao in dados if questao['ano'] == str(ano)]
-        return jsonify(questoes_filtradas)
+        return jsonify(questoes_filtradas), 200
 
 #continuar daqui
 
@@ -128,7 +152,7 @@ class QuestionsByDisciplineAndYear(Resource):
     def get(self, disciplina, ano):
         disciplina_ajustada = formatar_disciplina(disciplina)
         questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada and questao['ano'] == str(ano)]
-        return jsonify(questoes_filtradas)
+        return jsonify(questoes_filtradas), 200
 
 
 # rota para retornar filtrando por área de conhecimento e ano
@@ -139,7 +163,7 @@ class QuestionsByAreaAndYear(Resource):
         area_conhecimento_ajustada = formatar_area_conhecimento(area_conhecimento)
 
         questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada and questao['ano'] == str(ano)]
-        return jsonify(questoes_filtradas)
+        return jsonify(questoes_filtradas), 200
 
 
 # rota para retornar filtrando 30 questões aleatórias por disciplina
@@ -152,7 +176,7 @@ class QuestionsRandomByDiscipline(Resource):
         questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
         questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
-        return jsonify(questoes_aleatorias)
+        return jsonify(questoes_aleatorias), 200
 
 
 # rota para retornar filtrando 30 questões aleatórias por área de conhecimento
@@ -165,7 +189,7 @@ class QuestionsRandomByArea(Resource):
         questoes_filtradas = [questao for questao in dados if questao['area_conhecimento'] == area_conhecimento_ajustada]
         questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
-        return jsonify(questoes_aleatorias)
+        return jsonify(questoes_aleatorias), 200
 
 
 if __name__ == '__main__':
