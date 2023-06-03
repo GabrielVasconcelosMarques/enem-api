@@ -17,13 +17,13 @@ dados = []
 
 def formatar_area_conhecimento(area_conhecimento):
     if area_conhecimento == 'linguagens':
-        area_conhecimento = 'Linguagens, Códigos e suas Tecnologias'
+        area_conhecimento = 'linguagens'
     elif area_conhecimento == 'exatas':
-        area_conhecimento = 'Matemática e suas Tecnologias'
+        area_conhecimento = 'exatas'
     elif area_conhecimento == 'humanas':
-        area_conhecimento = 'Ciências Humanas e suas Tecnologias'
+        area_conhecimento = 'humanas'
     elif area_conhecimento == 'natureza':
-        area_conhecimento = 'Ciências da Natureza e suas Tecnologias'
+        area_conhecimento = 'natureza'
 
     return area_conhecimento
 
