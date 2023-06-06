@@ -179,6 +179,18 @@ class QuestionsRandomByArea(Resource):
         questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
         return json.dumps(questoes_aleatorias), 200
+    
+
+# rota para retornar filtrando 30 questões aleatórias por área de conhecimento
+# ex: /questions/random-area/linguagens
+@api.route('/questions/random-area')
+class QuestionsRandom(Resource):
+    def get(self):
+
+        questoes_filtradas = [questao for questao in dados]
+        questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
+
+        return json.dumps(questoes_aleatorias), 200
 
 
 if __name__ == '__main__':
