@@ -43,7 +43,7 @@ def formatar_disciplina(disciplina):
     elif disciplina == 'tic':
         disciplina = 'Tecnologias da Informação e Comunicação'
     elif disciplina == 'matematica':
-        disciplina = 'Matemática'
+        disciplina = 'matematica'
     elif disciplina == 'historia':
         disciplina = 'História'
     elif disciplina == 'geografia':
@@ -118,7 +118,7 @@ class QuestionsByDiscipline(Resource):
     def get(self, disciplina):
         disciplina_ajustada = formatar_disciplina(disciplina)
         
-        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina]
         return json.dumps(questoes_filtradas), 200
 
 
@@ -140,7 +140,7 @@ class QuestionsByYear(Resource):
 class QuestionsByDisciplineAndYear(Resource):
     def get(self, disciplina, ano):
         disciplina_ajustada = formatar_disciplina(disciplina)
-        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada and questao['ano'] == str(ano)]
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina and questao['ano'] == str(ano)]
         return json.dumps(questoes_filtradas), 200
 
 
@@ -162,7 +162,7 @@ class QuestionsRandomByDiscipline(Resource):
     def get(self, disciplina):
         disciplina_ajustada = formatar_disciplina(disciplina)
 
-        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina_ajustada]
+        questoes_filtradas = [questao for questao in dados if questao['disciplina'] == disciplina]
         questoes_aleatorias = random.sample(questoes_filtradas, 30) # retornando 30 questoes
 
         return json.dumps(questoes_aleatorias), 200
