@@ -183,7 +183,7 @@ class QuestionsRandomByArea(Resource):
 
 # rota para retornar filtrando 30 questões aleatórias por área de conhecimento
 # ex: /questions/random-area/linguagens
-@api.route('/questions/random-area')
+@api.route('/questions/random')
 class QuestionsRandom(Resource):
     def get(self):
 
